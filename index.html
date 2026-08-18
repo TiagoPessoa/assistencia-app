@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Assistência Técnica - Login</title>
+  <title>Assistência Cell - Gestão</title>
 
   <!-- Configurações PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/icon-192.png">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -18,16 +17,16 @@
   <!-- SDK Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 font-sans text-gray-900 min-h-screen flex flex-col justify-between">
+<body class="bg-gray-100 font-sans text-gray-900 pb-20">
 
-  <!-- TELA DE LOGIN (Exibida se não houver usuário logado) -->
+  <!-- TELA DE LOGIN (Se não estiver autenticado) -->
   <div id="secao-login" class="hidden max-w-md w-full mx-auto p-6 mt-12">
     <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
       <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
         🛠️
       </div>
       <h1 class="text-2xl font-bold text-gray-800">Assistência Cell</h1>
-      <p class="text-xs text-gray-500 mb-6 mt-1">Acesse o sistema com suas credenciais</p>
+      <p class="text-xs text-gray-500 mb-6 mt-1">Acesse com seu e-mail e senha</p>
 
       <form id="form-login" class="space-y-4 text-left">
         <div>
@@ -48,97 +47,171 @@
     </div>
   </div>
 
-  <!-- CONTEÚDO PROTEGIDO (Exibido após login) -->
+  <!-- CONTEÚDO PRINCIPAL (Exibido após login) -->
   <div id="secao-app" class="hidden max-w-md mx-auto p-4 w-full">
-    <!-- Cabeçalho com dados da sessão e botão Sair -->
-    <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow mb-4 border border-gray-200">
+    
+    <!-- Topo / Cabeçalho -->
+    <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm mb-4 border border-gray-200">
       <div>
-        <span class="text-xs text-gray-500 block">Conectado como</span>
-        <strong id="user-email" class="text-xs text-blue-600">...</strong>
+        <h1 class="font-bold text-base text-gray-800">Assistência Cell</h1>
+        <span id="user-email" class="text-xs text-gray-500 block truncate max-w-[200px]">...</span>
       </div>
-      <button onclick="fazerLogout()" class="text-xs bg-red-50 text-red-600 border border-red-200 font-semibold px-3 py-1.5 rounded hover:bg-red-100 transition">
+      <button onclick="fazerLogout()" class="text-xs bg-red-50 text-red-600 border border-red-200 font-semibold px-2.5 py-1.5 rounded-lg hover:bg-red-100 transition">
         Sair 🚪
       </button>
     </div>
 
-    <h1 class="text-2xl font-bold text-blue-600 mb-4 text-center">Assistência Técnica</h1>
+    <!-- ABAS DO SISTEMA -->
 
-    <!-- Formulário de Nova OS -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
-      <h2 class="font-bold text-lg text-gray-800 mb-3">Nova Ordem de Serviço</h2>
-      
-      <form id="form-os" class="space-y-3">
-        <!-- Dados do Cliente -->
-        <h3 class="text-sm font-semibold text-blue-600 border-b pb-1">Cliente</h3>
-        <div>
-          <label class="block text-xs font-medium text-gray-600">Nome do Cliente *</label>
-          <input type="text" id="cliente_nome" required class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600">WhatsApp / Telefone *</label>
-          <input type="text" id="cliente_telefone" required placeholder="(84) 99999-9999" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
+    <!-- ABA 1: DASHBOARD -->
+    <div id="aba-dashboard" class="aba-conteudo space-y-4">
+      <h2 class="font-bold text-lg text-gray-800">Painel Principal</h2>
 
-        <!-- Dados do Aparelho -->
-        <h3 class="text-sm font-semibold text-blue-600 border-b pb-1 pt-2">Aparelho</h3>
+      <!-- Grid de Resumo Operacional -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+          <span class="text-xs text-gray-500 block">OSs em Andamento</span>
+          <strong id="dash-os-abertas" class="text-2xl font-bold text-blue-600">0</strong>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+          <span class="text-xs text-gray-500 block">Pronto / Entregue</span>
+          <strong id="dash-os-finalizadas" class="text-2xl font-bold text-green-600">0</strong>
+        </div>
+      </div>
+
+      <!-- Atalhos Rápidos -->
+      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="font-bold text-sm text-gray-700 mb-3">Ações Rápidas</h3>
         <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-600">Marca *</label>
-            <input type="text" id="aparelho_marca" required placeholder="Ex: Samsung" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600">Modelo *</label>
-            <input type="text" id="aparelho_modelo" required placeholder="Ex: Galaxy A32" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
+          <button onclick="mudarAba('os')" class="bg-blue-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-blue-700">
+            ➕ Nova OS
+          </button>
+          <button onclick="alert('Em breve: PDV de Vendas!')" class="bg-green-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-green-700">
+            🛒 Nova Venda
+          </button>
         </div>
-        
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-600">Senha / Padrão</label>
-            <input type="text" id="senha_aparelho" placeholder="1234 / Desenho" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600">IMEI / Nº Série</label>
-            <input type="text" id="imei_serie" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
-        </div>
+      </div>
 
-        <div>
-          <label class="block text-xs font-medium text-gray-600">Defeito Relatado *</label>
-          <textarea id="defeito_relatado" required rows="2" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-        </div>
-
-        <!-- Checklist de Entrada -->
-        <h3 class="text-sm font-semibold text-blue-600 border-b pb-1 pt-2">Checklist de Entrada</h3>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" id="chk_liga" checked class="rounded text-blue-600">
-            <span>Aparelho Liga</span>
-          </label>
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" id="chk_tela" class="rounded text-blue-600">
-            <span>Tela Trincada</span>
-          </label>
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" id="chk_touch" checked class="rounded text-blue-600">
-            <span>Touch Ok</span>
-          </label>
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" id="chk_camera" checked class="rounded text-blue-600">
-            <span>Câmeras Ok</span>
-          </label>
-        </div>
-
-        <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-bold py-2 rounded shadow hover:bg-blue-700 transition mt-4">
-          Cadastrar Ordem de Serviço
-        </button>
-      </form>
+      <!-- Lista Recente de OSs no Dashboard -->
+      <div>
+        <h3 class="font-bold text-sm text-gray-700 mb-2">Últimas Ordens de Serviço</h3>
+        <div id="dash-lista-os" class="space-y-2">Carregando...</div>
+      </div>
     </div>
 
-    <!-- Lista de OS -->
-    <h2 class="font-bold text-lg text-gray-800 mb-3">Ordens de Serviço Recentes</h2>
-    <div id="conteudo" class="space-y-3">Carregando...</div>
+    <!-- ABA 2: GESTÃO DE OS -->
+    <div id="aba-os" class="aba-conteudo hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <h2 class="font-bold text-lg text-gray-800 mb-3">Cadastrar Nova OS</h2>
+        
+        <form id="form-os" class="space-y-3">
+          <h3 class="text-xs font-semibold text-blue-600 border-b pb-1">Cliente</h3>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Nome do Cliente *</label>
+            <input type="text" id="cliente_nome" required class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">WhatsApp / Telefone *</label>
+            <input type="text" id="cliente_telefone" required placeholder="(84) 99999-9999" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+
+          <h3 class="text-xs font-semibold text-blue-600 border-b pb-1 pt-2">Aparelho</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Marca *</label>
+              <input type="text" id="aparelho_marca" required placeholder="Ex: Samsung" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Modelo *</label>
+              <input type="text" id="aparelho_modelo" required placeholder="Ex: A32" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Senha / Padrão</label>
+              <input type="text" id="senha_aparelho" placeholder="1234" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">IMEI / Nº Série</label>
+              <input type="text" id="imei_serie" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Defeito Relatado *</label>
+            <textarea id="defeito_relatado" required rows="2" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+          </div>
+
+          <h3 class="text-xs font-semibold text-blue-600 border-b pb-1 pt-2">Checklist de Entrada</h3>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="chk_liga" checked class="rounded text-blue-600">
+              <span>Aparelho Liga</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="chk_tela" class="rounded text-blue-600">
+              <span>Tela Trincada</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="chk_touch" checked class="rounded text-blue-600">
+              <span>Touch Ok</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="chk_camera" checked class="rounded text-blue-600">
+              <span>Câmeras Ok</span>
+            </label>
+          </div>
+
+          <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg shadow hover:bg-blue-700 transition mt-3">
+            Salvar Ordem de Serviço
+          </button>
+        </form>
+      </div>
+
+      <h2 class="font-bold text-base text-gray-800">Todas as Ordens de Serviço</h2>
+      <div id="lista-todas-os" class="space-y-3">Carregando...</div>
+    </div>
+
+    <!-- ABA 3: VENDAS (PDV) -->
+    <div id="aba-vendas" class="aba-conteudo hidden space-y-4">
+      <h2 class="font-bold text-lg text-gray-800">Ponto de Venda (PDV)</h2>
+      <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
+        <p class="text-sm text-gray-500">Módulo de Vendas de produtos e acessórios será ativado a seguir.</p>
+      </div>
+    </div>
+
+    <!-- ABA 4: ESTOQUE / PRODUTOS -->
+    <div id="aba-produtos" class="aba-conteudo hidden space-y-4">
+      <h2 class="font-bold text-lg text-gray-800">Gestão de Estoque</h2>
+      <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
+        <p class="text-sm text-gray-500">Módulo de Cadastro de Produtos e Peças será ativado a seguir.</p>
+      </div>
+    </div>
+
   </div>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR (PWA) -->
+  <nav id="nav-inferior" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+    <div class="max-w-md mx-auto flex justify-around py-2">
+      <button onclick="mudarAba('dashboard')" id="nav-btn-dashboard" class="nav-item flex flex-col items-center text-blue-600">
+        <span class="text-lg">📊</span>
+        <span class="text-[10px] font-semibold mt-0.5">Início</span>
+      </button>
+      <button onclick="mudarAba('os')" id="nav-btn-os" class="nav-item flex flex-col items-center text-gray-400">
+        <span class="text-lg">🛠️</span>
+        <span class="text-[10px] font-semibold mt-0.5">OSs</span>
+      </button>
+      <button onclick="mudarAba('vendas')" id="nav-btn-vendas" class="nav-item flex flex-col items-center text-gray-400">
+        <span class="text-lg">🛒</span>
+        <span class="text-[10px] font-semibold mt-0.5">Vendas</span>
+      </button>
+      <button onclick="mudarAba('produtos')" id="nav-btn-produtos" class="nav-item flex flex-col items-center text-gray-400">
+        <span class="text-lg">📦</span>
+        <span class="text-[10px] font-semibold mt-0.5">Estoque</span>
+      </button>
+    </div>
+  </nav>
 
   <script>
     const SUPABASE_URL = 'https://sqqpvfvysirhrndiqmnb.supabase.co';
@@ -157,17 +230,39 @@
       'Entregue / Finalizado'
     ];
 
-    // --- CONTROLE DE AUTENTICAÇÃO ---
+    // NAVEGAÇÃO DE ABAS
+    function mudarAba(nomeAba) {
+      document.querySelectorAll('.aba-conteudo').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('text-blue-600');
+        el.classList.add('text-gray-400');
+      });
+
+      document.getElementById(`aba-${nomeAba}`).classList.remove('hidden');
+      const btnAtivo = document.getElementById(`nav-btn-${nomeAba}`);
+      if (btnAtivo) {
+        btnAtivo.classList.remove('text-gray-400');
+        btnAtivo.classList.add('text-blue-600');
+      }
+
+      if (nomeAba === 'dashboard' || nomeAba === 'os') {
+        carregarOS();
+      }
+    }
+
+    // AUTENTICAÇÃO
     async function verificarSessao() {
       const { data: { session } } = await _supabase.auth.getSession();
 
       if (session) {
         document.getElementById('secao-login').classList.add('hidden');
         document.getElementById('secao-app').classList.remove('hidden');
+        document.getElementById('nav-inferior').classList.remove('hidden');
         document.getElementById('user-email').innerText = session.user.email;
         carregarOS();
       } else {
         document.getElementById('secao-app').classList.add('hidden');
+        document.getElementById('nav-inferior').classList.add('hidden');
         document.getElementById('secao-login').classList.remove('hidden');
       }
     }
@@ -200,25 +295,36 @@
       verificarSessao();
     }
 
-    // --- FUNÇÕES DA OS ---
+    // CARREGAR DADOS DE OS E DASHBOARD
     async function carregarOS() {
-      const container = document.getElementById('conteudo');
+      const containerTodas = document.getElementById('lista-todas-os');
+      const containerDash = document.getElementById('dash-lista-os');
+
       const { data, error } = await _supabase
         .from('ordens_servico')
         .select('*, clientes(nome, telefone)')
         .order('id', { ascending: false });
 
       if (error) {
-        container.innerHTML = `<p class="text-red-500 text-center">Erro: ${error.message}</p>`;
+        if(containerTodas) containerTodas.innerHTML = `<p class="text-red-500 text-center">Erro: ${error.message}</p>`;
         return;
       }
+
+      // Atualizar contadores do Dashboard
+      const abertas = data.filter(os => os.status !== 'Entregue / Finalizado').length;
+      const finalizadas = data.filter(os => os.status === 'Entregue / Finalizado').length;
+      
+      document.getElementById('dash-os-abertas').innerText = abertas;
+      document.getElementById('dash-os-finalizadas').innerText = finalizadas;
 
       if (!data || data.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center">Nenhuma OS cadastrada.</p>';
+        const msgVazia = '<p class="text-gray-500 text-center text-xs py-4">Nenhuma OS cadastrada.</p>';
+        containerTodas.innerHTML = msgVazia;
+        containerDash.innerHTML = msgVazia;
         return;
       }
 
-      container.innerHTML = data.map(os => {
+      const htmlOS = data.map(os => {
         const fone = os.clientes?.telefone ? os.clientes.telefone.replace(/\D/g, '') : '';
         const msgWhats = encodeURIComponent(
           `Olá, ${os.clientes?.nome || 'cliente'}! Segue o status da sua OS #${os.id}:\n\n` +
@@ -228,9 +334,9 @@
         );
 
         return `
-          <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
-            <div class="flex justify-between items-center mb-2">
-              <span class="font-bold text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">OS #${os.id}</span>
+          <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-1.5">
+              <span class="font-bold text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded">OS #${os.id}</span>
               <select onchange="atualizarStatus(${os.id}, this.value)" class="text-xs bg-blue-50 border border-blue-200 text-blue-800 font-semibold rounded p-1 outline-none">
                 ${STATUS_OPCOES.map(st => `
                   <option value="${st}" ${os.status === st ? 'selected' : ''}>${st}</option>
@@ -238,18 +344,29 @@
               </select>
             </div>
 
-            <h3 class="font-bold text-base text-gray-800">${os.aparelho_marca} ${os.aparelho_modelo}</h3>
+            <h3 class="font-bold text-sm text-gray-800">${os.aparelho_marca} ${os.aparelho_modelo}</h3>
             <p class="text-xs text-gray-600">Cliente: <strong>${os.clientes?.nome || 'N/A'}</strong> (${os.clientes?.telefone || ''})</p>
-            <p class="text-xs text-gray-500 mt-1"><strong>Defeito:</strong> ${os.defeito_relatado}</p>
+            <p class="text-xs text-gray-500 mt-0.5"><strong>Defeito:</strong> ${os.defeito_relatado}</p>
 
             ${fone ? `
-              <a href="https://wa.me/55${fone}?text=${msgWhats}" target="_blank" class="inline-block mt-3 text-xs bg-green-600 text-white font-bold py-1 px-3 rounded hover:bg-green-700 transition">
-                📱 Enviar no WhatsApp
+              <a href="https://wa.me/55${fone}?text=${msgWhats}" target="_blank" class="inline-block mt-2 text-xs bg-green-600 text-white font-bold py-1 px-2.5 rounded hover:bg-green-700 transition">
+                📱 WhatsApp
               </a>
             ` : ''}
           </div>
         `;
       }).join('');
+
+      containerTodas.innerHTML = htmlOS;
+      containerDash.innerHTML = data.slice(0, 3).map(os => `
+        <div class="bg-white p-2.5 rounded-lg border border-gray-200 flex justify-between items-center">
+          <div>
+            <strong class="text-xs text-gray-800 block">OS #${os.id} - ${os.aparelho_marca} ${os.aparelho_modelo}</strong>
+            <span class="text-[10px] text-gray-500">${os.clientes?.nome || 'Cliente'}</span>
+          </div>
+          <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">${os.status}</span>
+        </div>
+      `).join('');
     }
 
     async function atualizarStatus(osId, novoStatus) {
@@ -265,6 +382,7 @@
       }
     }
 
+    // FORMULÁRIO DE NOVA OS
     document.getElementById('form-os').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btn-salvar');
@@ -306,11 +424,12 @@
         document.getElementById('form-os').reset();
         alert('Ordem de Serviço criada com sucesso!');
         carregarOS();
+        mudarAba('dashboard');
       } catch (err) {
         alert('Erro ao salvar: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.innerText = 'Cadastrar Ordem de Serviço';
+        btn.innerText = 'Salvar Ordem de Serviço';
       }
     });
 
