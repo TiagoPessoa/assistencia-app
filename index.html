@@ -17,21 +17,30 @@
   <!-- SDK Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- FullCalendar JS & CSS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
   <style>
-    /* Estilos para impressão de comprovante */
     @media print {
       body * { visibility: hidden; }
       #comprovante-impressao, #comprovante-impressao * { visibility: visible; }
       #comprovante-impressao { position: absolute; left: 0; top: 0; width: 100%; }
     }
+    /* Estilos customizados para o FullCalendar */
+    .fc { font-size: 0.75rem; }
+    .fc-toolbar-title { font-size: 1rem !important; font-weight: bold; color: #1e293b; }
+    .fc-button { padding: 0.2rem 0.5rem !important; font-size: 0.7rem !important; font-weight: bold !important; border-radius: 0.5rem !important; }
+    .fc-daygrid-day-number { font-weight: bold; color: #475569; padding: 4px !important; }
+    .fc-day-today { background-color: #fef08a !important; } /* Destaque para o dia atual igual à imagem */
+    .fc-event { border-radius: 6px; padding: 2px 4px; font-weight: 600; font-size: 0.65rem; border: none; }
   </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-900 pb-20">
 
-  <!-- CONTAINER DE TOAST NOTIFICATIONS (Alertas Animados) -->
+  <!-- CONTAINER DE TOAST NOTIFICATIONS -->
   <div id="toast-container" class="fixed top-4 right-4 left-4 z-50 flex flex-col space-y-2 max-w-md mx-auto pointer-events-none"></div>
 
-  <!-- MODAL COMPROVANTE PARA IMPRESSÃO / VISUALIZAÇÃO -->
+  <!-- MODAL COMPROVANTE -->
   <div id="modal-comprovante" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
       <div id="comprovante-impressao" class="text-xs text-gray-800 space-y-3 font-mono border p-3 rounded bg-white">
@@ -39,22 +48,15 @@
           <h2 class="font-bold text-sm">🛠️ ASSISTÊNCIA CELL</h2>
           <p class="text-[10px] text-gray-500">Comprovante de Ordem de Serviço</p>
         </div>
-        <div id="comprovante-conteudo" class="space-y-2">
-          <!-- Preenchido via JS -->
-        </div>
+        <div id="comprovante-conteudo" class="space-y-2"></div>
         <div class="border-t pt-2 text-[9px] text-center text-gray-500">
           <p>Garantia de 90 dias para serviços executados.</p>
-          <p>Aparelhos não retirados em 90 dias serão descartados.</p>
         </div>
       </div>
 
       <div class="flex space-x-2">
-        <button onclick="window.print()" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-blue-700">
-          🖨️ Imprimir
-        </button>
-        <button onclick="fecharModalComprovante()" class="bg-gray-200 text-gray-800 font-bold px-4 py-2 rounded-lg text-xs hover:bg-gray-300">
-          Fechar
-        </button>
+        <button onclick="window.print()" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-blue-700">🖨️ Imprimir</button>
+        <button onclick="fecharModalComprovante()" class="bg-gray-200 text-gray-800 font-bold px-4 py-2 rounded-lg text-xs hover:bg-gray-300">Fechar</button>
       </div>
     </div>
   </div>
@@ -62,47 +64,30 @@
   <!-- TELA DE LOGIN -->
   <div id="secao-login" class="hidden max-w-md w-full mx-auto p-6 mt-8">
     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 text-center space-y-4">
-      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold shadow-inner">
-        🛠️
-      </div>
+      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold shadow-inner">🛠️</div>
       <div>
         <h1 class="text-2xl font-extrabold text-gray-800">Assistência Cell</h1>
-        <p class="text-xs text-gray-500 mt-1">Painel de Gestão e Ordens — Acesse sua conta</p>
+        <p class="text-xs text-gray-500 mt-1">Painel de Gestão e Ordens</p>
       </div>
 
       <form id="form-login" class="space-y-4 text-left pt-2">
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">E-mail</label>
-          <div class="relative">
-            <input type="email" id="login-email" required placeholder="seuemail@exemplo.com" class="w-full border rounded-xl p-3 pl-9 text-sm focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
-            <span class="absolute left-3 top-3.5 text-gray-400 text-xs">✉️</span>
-          </div>
+          <input type="email" id="login-email" required placeholder="seuemail@exemplo.com" class="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
         </div>
-
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Senha</label>
           <div class="relative">
-            <input type="password" id="login-senha" required placeholder="••••••••" class="w-full border rounded-xl p-3 pl-9 pr-10 text-sm focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
-            <span class="absolute left-3 top-3.5 text-gray-400 text-xs">🔒</span>
-            <button type="button" onclick="toggleSenha()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 text-sm focus:outline-none">
-              👁️
-            </button>
+            <input type="password" id="login-senha" required placeholder="••••••••" class="w-full border rounded-xl p-3 pr-10 text-sm focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+            <button type="button" onclick="toggleSenha()" class="absolute right-3 top-3 text-gray-400 text-sm">👁️</button>
           </div>
         </div>
-
-        <button type="submit" id="btn-entrar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition active:scale-[0.99]">
-          Entrar no Sistema
-        </button>
+        <button type="submit" id="btn-entrar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition">Entrar no Sistema</button>
       </form>
-
-      <div class="border-t pt-3 text-xs text-gray-500 flex justify-between items-center">
-        <span>Precisa de ajuda?</span>
-        <a href="https://wa.me/5584999999999?text=Suporte%20Assistência%20App" target="_blank" class="text-blue-600 font-bold hover:underline">Suporte →</a>
-      </div>
     </div>
   </div>
 
-  <!-- CONTEÚDO PRINCIPAL (Exibido após login) -->
+  <!-- CONTEÚDO PRINCIPAL -->
   <div id="secao-app" class="hidden max-w-md mx-auto p-4 w-full">
     
     <!-- Topo / Cabeçalho -->
@@ -111,9 +96,7 @@
         <h1 class="font-extrabold text-base text-gray-800">Assistência Cell</h1>
         <span id="user-email" class="text-[11px] text-gray-400 block truncate max-w-[180px]">...</span>
       </div>
-      <button onclick="fazerLogout()" class="text-xs bg-red-50 text-red-600 border border-red-100 font-semibold px-3 py-1.5 rounded-xl hover:bg-red-100 transition">
-        Sair 🚪
-      </button>
+      <button onclick="fazerLogout()" class="text-xs bg-red-50 text-red-600 border border-red-100 font-semibold px-3 py-1.5 rounded-xl hover:bg-red-100 transition">Sair 🚪</button>
     </div>
 
     <!-- ABAS DO SISTEMA -->
@@ -122,7 +105,6 @@
     <div id="aba-dashboard" class="aba-conteudo space-y-4">
       <h2 class="font-bold text-lg text-gray-800">Painel Geral</h2>
 
-      <!-- Resumo Financeiro -->
       <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-2xl shadow-md space-y-3">
         <span class="text-[10px] uppercase font-bold tracking-wider opacity-80">Resumo do Mês</span>
         <div class="grid grid-cols-2 gap-3 border-t border-white/20 pt-2">
@@ -137,7 +119,6 @@
         </div>
       </div>
 
-      <!-- Resumo Operacional -->
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm">
           <span class="text-xs text-gray-500 block">OSs em Andamento</span>
@@ -149,27 +130,31 @@
         </div>
       </div>
 
-      <!-- Atalhos Rápidos -->
       <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
         <h3 class="font-bold text-xs text-gray-400 uppercase mb-3">Ações Rápidas</h3>
         <div class="grid grid-cols-2 gap-2">
-          <button onclick="mudarAba('os')" class="bg-blue-600 text-white p-3 rounded-xl font-bold text-xs text-center shadow-sm hover:bg-blue-700 transition">
-            ➕ Nova OS
-          </button>
-          <button onclick="mudarAba('vendas')" class="bg-green-600 text-white p-3 rounded-xl font-bold text-xs text-center shadow-sm hover:bg-green-700 transition">
-            🛒 Nova Venda
-          </button>
+          <button onclick="mudarAba('os')" class="bg-blue-600 text-white p-3 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-700">➕ Nova OS</button>
+          <button onclick="mudarAba('agenda')" class="bg-purple-600 text-white p-3 rounded-xl font-bold text-xs shadow-sm hover:bg-purple-700">📅 Calendário OS</button>
         </div>
       </div>
 
-      <!-- Últimas OSs -->
       <div>
         <h3 class="font-bold text-sm text-gray-700 mb-2">Últimas Ordens de Serviço</h3>
         <div id="dash-lista-os" class="space-y-2">Carregando...</div>
       </div>
     </div>
 
-    <!-- ABA 2: GESTÃO DE OS -->
+    <!-- ABA 2: CALENDÁRIO / AGENDA -->
+    <div id="aba-agenda" class="aba-conteudo hidden space-y-4">
+      <h2 class="font-bold text-lg text-gray-800">Agenda de Ordens de Serviço</h2>
+      
+      <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+        <!-- Renderização do FullCalendar -->
+        <div id="calendar" class="min-h-[400px]"></div>
+      </div>
+    </div>
+
+    <!-- ABA 3: GESTÃO DE OS -->
     <div id="aba-os" class="aba-conteudo hidden space-y-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <h2 class="font-bold text-lg text-gray-800 mb-3">Cadastrar Nova OS</h2>
@@ -189,233 +174,122 @@
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-medium text-gray-600">Marca *</label>
-              <input type="text" id="aparelho_marca" required placeholder="Ex: Samsung" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+              <input type="text" id="aparelho_marca" required placeholder="Ex: Samsung" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600">Modelo *</label>
-              <input type="text" id="aparelho_modelo" required placeholder="Ex: A32" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+              <input type="text" id="aparelho_modelo" required placeholder="Ex: A32" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
             </div>
           </div>
           
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-medium text-gray-600">Senha / Padrão</label>
-              <input type="text" id="senha_aparelho" placeholder="1234" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+              <input type="text" id="senha_aparelho" placeholder="1234" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600">IMEI / Nº Série</label>
-              <input type="text" id="imei_serie" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+              <input type="text" id="imei_serie" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
             </div>
           </div>
 
           <div>
             <label class="block text-xs font-medium text-gray-600">Defeito Relatado *</label>
-            <textarea id="defeito_relatado" required rows="2" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200"></textarea>
+            <textarea id="defeito_relatado" required rows="2" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none"></textarea>
           </div>
 
           <h3 class="text-xs font-semibold text-blue-600 border-b pb-1 pt-2">Orçamento / Valores</h3>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-medium text-gray-600">Valor Peças (R$)</label>
-              <input type="number" step="0.01" id="valor_pecas" value="0.00" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+              <input type="number" step="0.01" id="valor_pecas" value="0.00" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600">Mão de Obra (R$)</label>
-              <input type="number" step="0.01" id="valor_mao_obra" value="0.00" class="w-full border rounded-xl p-2.5 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none border-gray-200">
+              <input type="number" step="0.01" id="valor_mao_obra" value="0.00" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
             </div>
           </div>
 
-          <h3 class="text-xs font-semibold text-blue-600 border-b pb-1 pt-2">Checklist de Entrada</h3>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="chk_liga" checked class="rounded text-blue-600">
-              <span>Aparelho Liga</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="chk_tela" class="rounded text-blue-600">
-              <span>Tela Trincada</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="chk_touch" checked class="rounded text-blue-600">
-              <span>Touch Ok</span>
-            </label>
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="chk_camera" checked class="rounded text-blue-600">
-              <span>Câmeras Ok</span>
-            </label>
-          </div>
-
-          <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition mt-3">
-            Salvar Ordem de Serviço
-          </button>
+          <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition mt-3">Salvar Ordem de Serviço</button>
         </form>
       </div>
 
-      <!-- Filtros por Status de OS -->
       <div>
         <div class="flex justify-between items-center mb-2">
           <h2 class="font-bold text-base text-gray-800">Ordens de Serviço</h2>
-          <input type="text" id="busca-os" oninput="filtrarOS()" placeholder="🔍 Buscar OS..." class="border rounded-xl px-3 py-1 text-xs w-36 outline-none border-gray-200">
+          <input type="text" id="busca-os" oninput="filtrarOS()" placeholder="🔍 Buscar..." class="border rounded-xl px-3 py-1 text-xs w-36 border-gray-200 outline-none">
         </div>
-
-        <div class="flex space-x-1 overflow-x-auto pb-2 scrollbar-none text-[11px] font-bold">
-          <button onclick="filtrarStatusOS('TODAS')" id="filter-btn-TODAS" class="filter-os-btn bg-blue-600 text-white px-3 py-1.5 rounded-xl whitespace-nowrap">Todas</button>
-          <button onclick="filtrarStatusOS('ANDAMENTO')" id="filter-btn-ANDAMENTO" class="filter-os-btn bg-white text-gray-600 border px-3 py-1.5 rounded-xl whitespace-nowrap">Em Andamento</button>
-          <button onclick="filtrarStatusOS('PRONTAS')" id="filter-btn-PRONTAS" class="filter-os-btn bg-white text-gray-600 border px-3 py-1.5 rounded-xl whitespace-nowrap">Prontas</button>
-          <button onclick="filtrarStatusOS('ENTREGUES')" id="filter-btn-ENTREGUES" class="filter-os-btn bg-white text-gray-600 border px-3 py-1.5 rounded-xl whitespace-nowrap">Entregues</button>
-        </div>
-
         <div id="lista-todas-os" class="space-y-3">Carregando...</div>
       </div>
     </div>
 
-    <!-- ABA 3: VENDAS (PDV) -->
+    <!-- ABA 4: VENDAS (PDV) -->
     <div id="aba-vendas" class="aba-conteudo hidden space-y-4">
       <h2 class="font-bold text-lg text-gray-800">Venda no Balcão (PDV)</h2>
-
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-        <label class="block text-xs font-semibold text-gray-700">Adicionar Produto ao Carrinho</label>
+        <label class="block text-xs font-semibold text-gray-700">Adicionar Produto</label>
         <div class="flex space-x-2">
           <select id="pdv-select-produto" class="flex-1 border rounded-xl p-2.5 text-xs bg-white border-gray-200 outline-none">
             <option value="">Carregando estoque...</option>
           </select>
-          <button onclick="adicionarAoCarrinho()" class="bg-green-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-green-700 transition">
-            + Add
-          </button>
+          <button onclick="adicionarAoCarrinho()" class="bg-green-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-green-700">+ Add</button>
         </div>
       </div>
 
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="font-bold text-sm text-gray-800 border-b pb-2 mb-3">Itens do Carrinho</h3>
-        
-        <div id="pdv-carrinho-itens" class="space-y-2 mb-4">
-          <p class="text-xs text-gray-400 text-center py-2">Carrinho vazio.</p>
-        </div>
-
+        <h3 class="font-bold text-sm text-gray-800 border-b pb-2 mb-3">Carrinho</h3>
+        <div id="pdv-carrinho-itens" class="space-y-2 mb-4"><p class="text-xs text-gray-400 text-center py-2">Vazio.</p></div>
         <div class="border-t pt-3 space-y-3">
           <div class="flex justify-between items-center text-lg font-extrabold text-gray-800">
             <span>Total:</span>
             <span id="pdv-total" class="text-green-600">R$ 0,00</span>
           </div>
-
-          <div class="space-y-2">
-            <div>
-              <label class="block text-xs font-medium text-gray-600">Nome do Cliente (Opcional)</label>
-              <input type="text" id="pdv-cliente-nome" placeholder="Cliente Balcão" class="w-full border rounded-xl p-2 text-xs border-gray-200 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600">WhatsApp / Telefone (para recibo)</label>
-              <input type="text" id="pdv-cliente-fone" placeholder="(84) 99999-9999" class="w-full border rounded-xl p-2 text-xs border-gray-200 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600">Forma de Pagamento</label>
-              <select id="pdv-pagamento" class="w-full border rounded-xl p-2 text-xs bg-white border-gray-200 outline-none">
-                <option value="PIX">PIX</option>
-                <option value="Cartão de Crédito">Cartão de Crédito</option>
-                <option value="Cartão de Débito">Cartão de Débito</option>
-                <option value="Dinheiro">Dinheiro</option>
-              </select>
-            </div>
-          </div>
-
-          <button onclick="finalizarVenda()" id="btn-finalizar-venda" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-700 transition mt-2">
-            Finalizar Venda 💳
-          </button>
+          <button onclick="finalizarVenda()" id="btn-finalizar-venda" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-700">Finalizar Venda 💳</button>
         </div>
-      </div>
-
-      <div>
-        <h3 class="font-bold text-sm text-gray-700 mb-2">Vendas Recentes</h3>
-        <div id="pdv-historico-vendas" class="space-y-2">Carregando...</div>
       </div>
     </div>
 
-    <!-- ABA 4: ESTOQUE / PRODUTOS -->
+    <!-- ABA 5: ESTOQUE / PRODUTOS -->
     <div id="aba-produtos" class="aba-conteudo hidden space-y-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <h2 class="font-bold text-lg text-gray-800 mb-3">Novo Produto / Peça</h2>
-        
+        <h2 class="font-bold text-lg text-gray-800 mb-3">Novo Produto</h2>
         <form id="form-produto" class="space-y-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-600">Nome do Item *</label>
-            <input type="text" id="prod_nome" required placeholder="Ex: Película 3D iPhone 11" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
-          </div>
-
+          <input type="text" id="prod_nome" required placeholder="Nome do Item *" class="w-full border rounded-xl p-2.5 text-sm border-gray-200 outline-none">
           <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-gray-600">Categoria</label>
-              <select id="prod_categoria" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 bg-white outline-none">
-                <option value="Acessório">Acessório</option>
-                <option value="Peça">Peça de Reposição</option>
-                <option value="Carregador/Cabo">Carregador / Cabo</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600">Estoque Inicial *</label>
-              <input type="number" id="prod_estoque" required min="0" value="5" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
-            </div>
+            <input type="number" id="prod_estoque" required min="0" value="5" placeholder="Estoque *" class="w-full border rounded-xl p-2.5 text-sm border-gray-200 outline-none">
+            <input type="number" step="0.01" id="prod_venda" required placeholder="Preço Venda *" class="w-full border rounded-xl p-2.5 text-sm border-gray-200 outline-none">
           </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-gray-600">Preço de Custo (R$)</label>
-              <input type="number" step="0.01" id="prod_custo" placeholder="0.00" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600">Preço de Venda (R$) *</label>
-              <input type="number" step="0.01" id="prod_venda" required placeholder="0.00" class="w-full border rounded-xl p-2.5 text-sm mt-1 border-gray-200 outline-none">
-            </div>
-          </div>
-
-          <button type="submit" id="btn-salvar-prod" class="w-full bg-purple-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-purple-700 transition mt-2">
-            Cadastrar no Estoque
-          </button>
+          <button type="submit" class="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700">Cadastrar no Estoque</button>
         </form>
       </div>
-
-      <div class="flex justify-between items-center">
-        <h2 class="font-bold text-base text-gray-800">Itens em Estoque</h2>
-        <input type="text" id="busca-produto" oninput="filtrarProdutos()" placeholder="🔍 Buscar..." class="border rounded-xl px-3 py-1 text-xs w-36 outline-none border-gray-200">
-      </div>
-
       <div id="lista-produtos" class="space-y-2">Carregando...</div>
     </div>
 
-    <!-- ABA 5: CLIENTES & HISTÓRICO -->
+    <!-- ABA 6: CLIENTES -->
     <div id="aba-clientes" class="aba-conteudo hidden space-y-4">
-      <div class="flex justify-between items-center">
-        <h2 class="font-bold text-lg text-gray-800">Clientes Cadastrados</h2>
-        <input type="text" id="busca-cliente" oninput="filtrarClientes()" placeholder="🔍 Buscar..." class="border rounded-xl px-3 py-1 text-xs w-36 outline-none border-gray-200">
-      </div>
-
+      <h2 class="font-bold text-lg text-gray-800">Clientes Cadastrados</h2>
       <div id="lista-clientes" class="space-y-2">Carregando...</div>
     </div>
 
   </div>
 
-  <!-- BARRA DE NAVEGAÇÃO INFERIOR (PWA) -->
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
   <nav id="nav-inferior" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
     <div class="max-w-md mx-auto flex justify-around py-2">
       <button onclick="mudarAba('dashboard')" id="nav-btn-dashboard" class="nav-item flex flex-col items-center text-blue-600">
-        <span class="text-lg">📊</span>
-        <span class="text-[10px] font-bold mt-0.5">Início</span>
+        <span class="text-lg">📊</span><span class="text-[10px] font-bold">Início</span>
+      </button>
+      <button onclick="mudarAba('agenda')" id="nav-btn-agenda" class="nav-item flex flex-col items-center text-gray-400">
+        <span class="text-lg">📅</span><span class="text-[10px] font-bold">Agenda</span>
       </button>
       <button onclick="mudarAba('os')" id="nav-btn-os" class="nav-item flex flex-col items-center text-gray-400">
-        <span class="text-lg">🛠️</span>
-        <span class="text-[10px] font-bold mt-0.5">OSs</span>
+        <span class="text-lg">🛠️</span><span class="text-[10px] font-bold">OSs</span>
       </button>
       <button onclick="mudarAba('vendas')" id="nav-btn-vendas" class="nav-item flex flex-col items-center text-gray-400">
-        <span class="text-lg">🛒</span>
-        <span class="text-[10px] font-bold mt-0.5">Vendas</span>
+        <span class="text-lg">🛒</span><span class="text-[10px] font-bold">Vendas</span>
       </button>
       <button onclick="mudarAba('produtos')" id="nav-btn-produtos" class="nav-item flex flex-col items-center text-gray-400">
-        <span class="text-lg">📦</span>
-        <span class="text-[10px] font-bold mt-0.5">Estoque</span>
-      </button>
-      <button onclick="mudarAba('clientes')" id="nav-btn-clientes" class="nav-item flex flex-col items-center text-gray-400">
-        <span class="text-lg">👥</span>
-        <span class="text-[10px] font-bold mt-0.5">Clientes</span>
+        <span class="text-lg">📦</span><span class="text-[10px] font-bold">Estoque</span>
       </button>
     </div>
   </nav>
@@ -427,83 +301,44 @@
 
     let osGlobal = [];
     let produtosGlobal = [];
-    let clientesGlobal = [];
-    let carrinho = [];
-    let filtroOSAtual = 'TODAS';
+    let calendarInstance = null;
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
     }
 
-    const STATUS_OPCOES = [
-      'Aguardando Avaliação',
-      'Em Manutenção',
-      'Aguardando Peça',
-      'Pronto para Retirada',
-      'Entregue / Finalizado'
-    ];
-
-    // --- SISTEMA DE NOTIFICAÇÃO TOAST ---
     function mostrarToast(mensagem, tipo = 'sucesso') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
-
-      const corBg = tipo === 'erro' ? 'bg-red-600' : tipo === 'aviso' ? 'bg-amber-500' : 'bg-green-600';
-      const icone = tipo === 'erro' ? '⚠️' : tipo === 'aviso' ? '🔔' : '✅';
-
-      toast.className = `${corBg} text-white text-xs font-bold px-4 py-3 rounded-xl shadow-lg flex items-center justify-between transition-all duration-300 pointer-events-auto transform translate-y-[-10px] opacity-0`;
-      toast.innerHTML = `
-        <div class="flex items-center space-x-2">
-          <span>${icone}</span>
-          <span>${mensagem}</span>
-        </div>
-        <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white font-bold ml-2">✕</button>
-      `;
-
+      toast.className = `${tipo === 'erro' ? 'bg-red-600' : 'bg-green-600'} text-white text-xs font-bold px-4 py-3 rounded-xl shadow-lg flex justify-between`;
+      toast.innerHTML = `<span>${mensagem}</span><button onclick="this.parentElement.remove()">✕</button>`;
       container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.classList.remove('translate-y-[-10px]', 'opacity-0');
-      }, 10);
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0');
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
+      setTimeout(() => toast.remove(), 3500);
     }
 
-    // ALTERNAR SENHA VISÍVEL
     function toggleSenha() {
       const input = document.getElementById('login-senha');
       input.type = input.type === 'password' ? 'text' : 'password';
     }
 
-    // NAVEGAÇÃO DE ABAS
     function mudarAba(nomeAba) {
       document.querySelectorAll('.aba-conteudo').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-item').forEach(el => {
-        el.classList.remove('text-blue-600');
-        el.classList.add('text-gray-400');
-      });
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.replace('text-blue-600', 'text-gray-400'));
 
       document.getElementById(`aba-${nomeAba}`).classList.remove('hidden');
       const btnAtivo = document.getElementById(`nav-btn-${nomeAba}`);
-      if (btnAtivo) {
-        btnAtivo.classList.remove('text-gray-400');
-        btnAtivo.classList.add('text-blue-600');
-      }
+      if (btnAtivo) btnAtivo.classList.replace('text-gray-400', 'text-blue-600');
 
       if (nomeAba === 'dashboard') carregarDashboardFinanceiro();
+      if (nomeAba === 'agenda') inicializarCalendario();
       if (nomeAba === 'os') carregarOS();
       if (nomeAba === 'produtos') carregarProdutos();
       if (nomeAba === 'vendas') inicializarPDV();
       if (nomeAba === 'clientes') carregarClientes();
     }
 
-    // AUTENTICAÇÃO
     async function verificarSessao() {
       const { data: { session } } = await _supabase.auth.getSession();
-
       if (session) {
         document.getElementById('secao-login').classList.add('hidden');
         document.getElementById('secao-app').classList.remove('hidden');
@@ -512,451 +347,119 @@
         carregarDashboardFinanceiro();
       } else {
         document.getElementById('secao-app').classList.add('hidden');
-        document.getElementById('nav-inferior').classList.add('hidden');
         document.getElementById('secao-login').classList.remove('hidden');
       }
     }
 
     document.getElementById('form-login').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('btn-entrar');
-      btn.disabled = true;
-      btn.innerText = 'Autenticando...';
-
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-senha').value;
-
-      const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        mostrarToast('Dados de acesso incorretos. Tente novamente!', 'erro');
-        btn.disabled = false;
-        btn.innerText = 'Entrar no Sistema';
-      } else {
-        mostrarToast('Login realizado com sucesso!');
-        verificarSessao();
-      }
+      const { error } = await _supabase.auth.signInWithPassword({ email, password });
+      if (error) mostrarToast('Login incorreto!', 'erro');
+      else verificarSessao();
     });
 
     async function fazerLogout() {
       await _supabase.auth.signOut();
-      mostrarToast('Sessão encerrada.');
       verificarSessao();
     }
 
-    // DASHBOARD
+    // CALENDÁRIO / AGENDA DA ASSISTÊNCIA
+    async function inicializarCalendario() {
+      await carregarOS();
+      const calendarEl = document.getElementById('calendar');
+
+      const eventos = osGlobal.map(os => ({
+        id: os.id,
+        title: `OS: ${os.id}, ${os.clientes?.nome || 'Cliente'} (${os.aparelho_modelo})`,
+        start: os.created_at ? os.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+        backgroundColor: os.status === 'Entregue / Finalizado' ? '#22c55e' : '#a855f7',
+        borderColor: 'transparent',
+        textColor: '#ffffff'
+      }));
+
+      if (calendarInstance) calendarInstance.destroy();
+
+      calendarInstance = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: ''
+        },
+        buttonText: { today: 'Hoje' },
+        events: eventos,
+        eventClick: function(info) {
+          mudarAba('os');
+        }
+      });
+
+      calendarInstance.render();
+    }
+
     async function carregarDashboardFinanceiro() {
       const { data: osData } = await _supabase.from('ordens_servico').select('*, clientes(nome)');
       const { data: vendasData } = await _supabase.from('vendas').select('*');
 
       let faturamento = 0;
-      let lucro = 0;
-
       if (osData) {
         osData.forEach(os => {
-          if (os.status === 'Entregue / Finalizado') {
-            const totalOS = parseFloat(os.valor_total || (parseFloat(os.valor_pecas || 0) + parseFloat(os.valor_mao_obra || 0)));
-            faturamento += totalOS;
-            lucro += parseFloat(os.valor_mao_obra || 0);
-          }
+          if (os.status === 'Entregue / Finalizado') faturamento += parseFloat(os.valor_total || 0);
         });
-
         document.getElementById('dash-os-abertas').innerText = osData.filter(os => os.status !== 'Entregue / Finalizado').length;
         document.getElementById('dash-os-finalizadas').innerText = osData.filter(os => os.status === 'Entregue / Finalizado').length;
+      }
+      if (vendasData) vendasData.forEach(v => faturamento += parseFloat(v.total || 0));
 
-        document.getElementById('dash-lista-os').innerHTML = osData.slice(0, 3).map(os => `
-          <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center text-xs shadow-sm">
-            <div>
-              <strong class="text-gray-800 block">OS #${os.id} - ${os.aparelho_marca} ${os.aparelho_modelo}</strong>
-              <span class="text-[10px] text-gray-400">${os.clientes?.nome || 'Cliente'}</span>
+      document.getElementById('dash-faturamento-total').innerText = `R$ ${faturamento.toFixed(2)}`;
+      document.getElementById('dash-lucro-estimado').innerText = `R$ ${(faturamento * 0.5).toFixed(2)}`;
+    }
+
+    async function carregarOS() {
+      const containerTodas = document.getElementById('lista-todas-os');
+      const { data } = await _supabase.from('ordens_servico').select('*, clientes(nome, telefone)').order('id', { ascending: false });
+      osGlobal = data || [];
+
+      if(containerTodas) {
+        containerTodas.innerHTML = osGlobal.map(os => `
+          <div class="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-extrabold text-[10px] bg-gray-100 px-2 py-0.5 rounded-lg">OS #${os.id}</span>
+              <strong class="text-xs text-blue-600">${os.status}</strong>
             </div>
-            <span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-lg">${os.status}</span>
+            <h3 class="font-bold text-sm text-gray-800">${os.aparelho_marca} ${os.aparelho_modelo}</h3>
+            <p class="text-xs text-gray-500">Cliente: ${os.clientes?.nome || 'N/A'}</p>
           </div>
         `).join('');
       }
-
-      if (vendasData) {
-        vendasData.forEach(v => {
-          faturamento += parseFloat(v.total || 0);
-          lucro += parseFloat(v.total || 0) * 0.4;
-        });
-      }
-
-      document.getElementById('dash-faturamento-total').innerText = `R$ ${faturamento.toFixed(2)}`;
-      document.getElementById('dash-lucro-estimado').innerText = `R$ ${lucro.toFixed(2)}`;
     }
 
-    // MÓDULO DE OSs
-    async function carregarOS() {
-      const containerTodas = document.getElementById('lista-todas-os');
-      const { data, error } = await _supabase
-        .from('ordens_servico')
-        .select('*, clientes(nome, telefone)')
-        .order('id', { ascending: false });
-
-      if (error || !data) {
-        containerTodas.innerHTML = `<p class="text-red-500 text-center text-xs">Erro ao carregar OSs.</p>`;
-        return;
-      }
-
-      osGlobal = data;
-      renderizarListaOS(osGlobal);
-    }
-
-    function renderizarListaOS(lista) {
-      const containerTodas = document.getElementById('lista-todas-os');
-
-      if (!lista || lista.length === 0) {
-        containerTodas.innerHTML = '<p class="text-gray-400 text-center text-xs py-6">Nenhuma Ordem de Serviço encontrada.</p>';
-        return;
-      }
-
-      containerTodas.innerHTML = lista.map(os => {
-        const fone = os.clientes?.telefone ? os.clientes.telefone.replace(/\D/g, '') : '';
-        const total = parseFloat(os.valor_total || (parseFloat(os.valor_pecas || 0) + parseFloat(os.valor_mao_obra || 0)));
-
-        const msgWhats = encodeURIComponent(
-          `Olá, ${os.clientes?.nome || 'cliente'}! Segue o orçamento/status da sua OS #${os.id}:\n\n` +
-          `Aparelho: ${os.aparelho_marca} ${os.aparelho_modelo}\n` +
-          `Defeito: ${os.defeito_relatado}\n` +
-          `Status: ${os.status}\n\n` +
-          `Valor Total: R$ ${total.toFixed(2)}\n\n` +
-          `Podemos confirmar o serviço?`
-        );
-
-        return `
-          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex justify-between items-center mb-2">
-              <span class="font-extrabold text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg">OS #${os.id}</span>
-              <select onchange="atualizarStatus(${os.id}, this.value)" class="text-xs bg-blue-50 border border-blue-200 text-blue-800 font-bold rounded-lg p-1 outline-none">
-                ${STATUS_OPCOES.map(st => `
-                  <option value="${st}" ${os.status === st ? 'selected' : ''}>${st}</option>
-                `).join('')}
-              </select>
-            </div>
-
-            <h3 class="font-bold text-sm text-gray-800">${os.aparelho_marca} ${os.aparelho_modelo}</h3>
-            <p class="text-xs text-gray-600">Cliente: <strong>${os.clientes?.nome || 'N/A'}</strong> (${os.clientes?.telefone || ''})</p>
-            <p class="text-xs text-gray-500 mt-0.5"><strong>Defeito:</strong> ${os.defeito_relatado}</p>
-
-            <div class="mt-2 bg-gray-50 p-2 rounded-xl text-xs flex justify-between font-semibold text-gray-700">
-              <span>Valor Total: <strong class="text-green-600">R$ ${total.toFixed(2)}</strong></span>
-            </div>
-
-            <div class="flex space-x-2 mt-3">
-              ${fone ? `
-                <a href="https://wa.me/55${fone}?text=${msgWhats}" target="_blank" class="flex-1 text-center text-xs bg-green-600 text-white font-bold py-1.5 px-2 rounded-xl hover:bg-green-700 transition">
-                  📱 WhatsApp
-                </a>
-              ` : ''}
-              <button onclick="abrirComprovante('${os.id}')" class="bg-gray-100 text-gray-700 font-bold text-xs px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
-                🖨️ Recibo
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function filtrarStatusOS(statusTipo) {
-      filtroOSAtual = statusTipo;
-      
-      document.querySelectorAll('.filter-os-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-600', 'text-white');
-        btn.classList.add('bg-white', 'text-gray-600');
-      });
-
-      const btnAtivo = document.getElementById(`filter-btn-${statusTipo}`);
-      if (btnAtivo) {
-        btnAtivo.classList.remove('bg-white', 'text-gray-600');
-        btnAtivo.classList.add('bg-blue-600', 'text-white');
-      }
-
-      let filtrados = osGlobal;
-      if (statusTipo === 'ANDAMENTO') {
-        filtrados = osGlobal.filter(os => os.status === 'Aguardando Avaliação' || os.status === 'Em Manutenção' || os.status === 'Aguardando Peça');
-      } else if (statusTipo === 'PRONTAS') {
-        filtrados = osGlobal.filter(os => os.status === 'Pronto para Retirada');
-      } else if (statusTipo === 'ENTREGUES') {
-        filtrados = osGlobal.filter(os => os.status === 'Entregue / Finalizado');
-      }
-
-      renderizarListaOS(filtrados);
-    }
-
-    function filtrarOS() {
-      const termo = document.getElementById('busca-os').value.toLowerCase();
-      const filtrados = osGlobal.filter(os => 
-        os.aparelho_modelo.toLowerCase().includes(termo) || 
-        os.aparelho_marca.toLowerCase().includes(termo) ||
-        (os.clientes?.nome && os.clientes.nome.toLowerCase().includes(termo))
-      );
-      renderizarListaOS(filtrados);
-    }
-
-    async function atualizarStatus(osId, novoStatus) {
-      await _supabase.from('ordens_servico').update({ status: novoStatus }).eq('id', osId);
-      mostrarToast(`OS #${osId} atualizada para ${novoStatus}`);
-      carregarOS();
-    }
-
-    // SALVAR OS
     document.getElementById('form-os').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('btn-salvar');
-      btn.disabled = true;
-      btn.innerText = 'Salvando...';
+      const nome = document.getElementById('cliente_nome').value;
+      const telefone = document.getElementById('cliente_telefone').value;
 
-      try {
-        const nome = document.getElementById('cliente_nome').value;
-        const telefone = document.getElementById('cliente_telefone').value;
+      const { data: cliente } = await _supabase.from('clientes').insert([{ nome, telefone }]).select().single();
+      const valorPecas = parseFloat(document.getElementById('valor_pecas').value || 0);
+      const valorMaoObra = parseFloat(document.getElementById('valor_mao_obra').value || 0);
 
-        const { data: cliente, error: errCliente } = await _supabase
-          .from('clientes')
-          .insert([{ nome, telefone }])
-          .select()
-          .single();
-
-        if (errCliente) throw errCliente;
-
-        const valorPecas = parseFloat(document.getElementById('valor_pecas').value || 0);
-        const valorMaoObra = parseFloat(document.getElementById('valor_mao_obra').value || 0);
-
-        const novaOS = {
-          cliente_id: cliente.id,
-          aparelho_marca: document.getElementById('aparelho_marca').value,
-          aparelho_modelo: document.getElementById('aparelho_modelo').value,
-          senha_aparelho: document.getElementById('senha_aparelho').value,
-          imei_serie: document.getElementById('imei_serie').value,
-          defeito_relatado: document.getElementById('defeito_relatado').value,
-          valor_pecas: valorPecas,
-          valor_mao_obra: valorMaoObra,
-          valor_total: valorPecas + valorMaoObra,
-          checklist_entrada: {
-            liga: document.getElementById('chk_liga').checked,
-            tela_trincada: document.getElementById('chk_tela').checked,
-            touch_ok: document.getElementById('chk_touch').checked,
-            camera_ok: document.getElementById('chk_camera').checked
-          }
-        };
-
-        await _supabase.from('ordens_servico').insert([novaOS]);
-
-        document.getElementById('form-os').reset();
-        mostrarToast('Ordem de Serviço salva com sucesso!');
-        mudarAba('dashboard');
-      } catch (err) {
-        mostrarToast('Erro ao salvar OS: ' + err.message, 'erro');
-      } finally {
-        btn.disabled = false;
-        btn.innerText = 'Salvar Ordem de Serviço';
-      }
-    });
-
-    // COMPROVANTE / IMPRESSÃO
-    function abrirComprovante(osId) {
-      const os = osGlobal.find(o => o.id == osId);
-      if (!os) return;
-
-      const total = parseFloat(os.valor_total || (parseFloat(os.valor_pecas || 0) + parseFloat(os.valor_mao_obra || 0)));
-
-      document.getElementById('comprovante-conteudo').innerHTML = `
-        <p><strong>Nº OS:</strong> #${os.id}</p>
-        <p><strong>Data:</strong> ${new Date(os.created_at || Date.now()).toLocaleDateString('pt-BR')}</p>
-        <p><strong>Cliente:</strong> ${os.clientes?.nome || 'N/A'}</p>
-        <p><strong>Telefone:</strong> ${os.clientes?.telefone || 'N/A'}</p>
-        <hr class="my-2 border-dashed">
-        <p><strong>Aparelho:</strong> ${os.aparelho_marca} ${os.aparelho_modelo}</p>
-        <p><strong>Senha:</strong> ${os.senha_aparelho || 'N/A'}</p>
-        <p><strong>Defeito:</strong> ${os.defeito_relatado}</p>
-        <hr class="my-2 border-dashed">
-        <p class="text-sm font-bold">TOTAL: R$ ${total.toFixed(2)}</p>
-      `;
-
-      document.getElementById('modal-comprovante').classList.remove('hidden');
-    }
-
-    function fecharModalComprovante() {
-      document.getElementById('modal-comprovante').classList.add('hidden');
-    }
-
-    // CLIENTES
-    async function carregarClientes() {
-      const container = document.getElementById('lista-clientes');
-      const { data, error } = await _supabase
-        .from('clientes')
-        .select('*, ordens_servico(id, aparelho_marca, aparelho_modelo, status)')
-        .order('nome', { ascending: true });
-
-      if (error || !data) {
-        container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar clientes.</p>';
-        return;
-      }
-
-      clientesGlobal = data;
-      renderizarClientes(clientesGlobal);
-    }
-
-    function renderizarClientes(lista) {
-      const container = document.getElementById('lista-clientes');
-
-      if (!lista || lista.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Nenhum cliente cadastrado.</p>';
-        return;
-      }
-
-      container.innerHTML = lista.map(c => `
-        <div class="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
-          <div class="flex justify-between items-center">
-            <div>
-              <strong class="text-sm text-gray-800 block">${c.nome}</strong>
-              <span class="text-xs text-gray-400">📞 ${c.telefone || 'Sem telefone'}</span>
-            </div>
-            <span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-lg">
-              ${c.ordens_servico?.length || 0} OS(s)
-            </span>
-          </div>
-
-          ${c.ordens_servico && c.ordens_servico.length > 0 ? `
-            <div class="border-t pt-2 space-y-1">
-              <span class="text-[10px] font-semibold text-gray-400 block">Histórico de Serviços:</span>
-              ${c.ordens_servico.map(os => `
-                <div class="text-[11px] bg-gray-50 p-2 rounded-xl flex justify-between text-gray-700">
-                  <span>OS #${os.id} - ${os.aparelho_marca} ${os.aparelho_modelo}</span>
-                  <strong class="text-blue-600">${os.status}</strong>
-                </div>
-              `).join('')}
-            </div>
-          ` : ''}
-        </div>
-      `).join('');
-    }
-
-    function filtrarClientes() {
-      const termo = document.getElementById('busca-cliente').value.toLowerCase();
-      const filtrados = clientesGlobal.filter(c => c.nome.toLowerCase().includes(termo) || (c.telefone && c.telefone.includes(termo)));
-      renderizarClientes(filtrados);
-    }
-
-    // PRODUTOS & PDV
-    async function carregarProdutos() {
-      const { data } = await _supabase.from('produtos').select('*').order('nome', { ascending: true });
-      produtosGlobal = data || [];
-      renderizarProdutos(produtosGlobal);
-    }
-
-    function renderizarProdutos(lista) {
-      const container = document.getElementById('lista-produtos');
-      if (!lista || lista.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Nenhum produto cadastrado.</p>';
-        return;
-      }
-      container.innerHTML = lista.map(p => `
-        <div class="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
-          <div>
-            <strong class="text-sm text-gray-800">${p.nome}</strong>
-            <p class="text-xs text-gray-400">Venda: <strong class="text-green-600">R$ ${parseFloat(p.preco_venda).toFixed(2)}</strong></p>
-          </div>
-          <span class="text-xs font-bold text-gray-800 bg-gray-50 border px-2.5 py-1 rounded-xl">Qtd: ${p.estoque}</span>
-        </div>
-      `).join('');
-    }
-
-    function filtrarProdutos() {
-      const termo = document.getElementById('busca-produto').value.toLowerCase();
-      const filtrados = produtosGlobal.filter(p => p.nome.toLowerCase().includes(termo));
-      renderizarProdutos(filtrados);
-    }
-
-    document.getElementById('form-produto').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await _supabase.from('produtos').insert([{
-        nome: document.getElementById('prod_nome').value,
-        categoria: document.getElementById('prod_categoria').value,
-        estoque: parseInt(document.getElementById('prod_estoque').value),
-        preco_custo: parseFloat(document.getElementById('prod_custo').value || 0),
-        preco_venda: parseFloat(document.getElementById('prod_venda').value)
-      }]);
-      document.getElementById('form-produto').reset();
-      mostrarToast('Produto cadastrado com sucesso!');
-      carregarProdutos();
-    });
-
-    async function inicializarPDV() {
-      await carregarProdutos();
-      const select = document.getElementById('pdv-select-produto');
-      select.innerHTML = '<option value="">Selecione um produto...</option>' + 
-        produtosGlobal.map(p => `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.preco_venda).toFixed(2)} (Qtd: ${p.estoque})</option>`).join('');
-      carregarHistoricoVendas();
-    }
-
-    function adicionarAoCarrinho() {
-      const id = document.getElementById('pdv-select-produto').value;
-      const prod = produtosGlobal.find(p => p.id === id);
-      if (!prod) return mostrarToast('Selecione um produto!', 'aviso');
-
-      carrinho.push({ id: prod.id, nome: prod.nome, preco: parseFloat(prod.preco_venda), quantidade: 1 });
-      renderizarCarrinho();
-      mostrarToast('Item adicionado ao carrinho');
-    }
-
-    function renderizarCarrinho() {
-      const container = document.getElementById('pdv-carrinho-itens');
-      let total = 0;
-      if (carrinho.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">Carrinho vazio.</p>';
-        document.getElementById('pdv-total').innerText = 'R$ 0,00';
-        return;
-      }
-
-      container.innerHTML = carrinho.map((item, index) => {
-        total += item.preco;
-        return `
-          <div class="flex justify-between items-center text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-            <span>${item.nome}</span>
-            <strong class="text-green-600">R$ ${item.preco.toFixed(2)}</strong>
-          </div>
-        `;
-      }).join('');
-      document.getElementById('pdv-total').innerText = `R$ ${total.toFixed(2)}`;
-    }
-
-    async function finalizarVenda() {
-      if (carrinho.length === 0) return mostrarToast('Carrinho vazio!', 'aviso');
-      const total = carrinho.reduce((acc, i) => acc + i.preco, 0);
-
-      await _supabase.from('vendas').insert([{
-        cliente_nome: document.getElementById('pdv-cliente-nome').value || 'Cliente Balcão',
-        cliente_telefone: document.getElementById('pdv-cliente-fone').value,
-        total,
-        forma_pagamento: document.getElementById('pdv-pagamento').value
+      await _supabase.from('ordens_servico').insert([{
+        cliente_id: cliente.id,
+        aparelho_marca: document.getElementById('aparelho_marca').value,
+        aparelho_modelo: document.getElementById('aparelho_modelo').value,
+        senha_aparelho: document.getElementById('senha_aparelho').value,
+        defeito_relatado: document.getElementById('defeito_relatado').value,
+        valor_pecas: valorPecas,
+        valor_mao_obra: valorMaoObra,
+        valor_total: valorPecas + valorMaoObra
       }]);
 
-      carrinho = [];
-      renderizarCarrinho();
-      mostrarToast('Venda finalizada com sucesso! 💳');
-      inicializarPDV();
-    }
-
-    async function carregarHistoricoVendas() {
-      const container = document.getElementById('pdv-historico-vendas');
-      const { data } = await _supabase.from('vendas').select('*').order('id', { ascending: false }).limit(5);
-
-      if (!data || data.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">Nenhuma venda realizada.</p>';
-        return;
-      }
-
-      container.innerHTML = data.map(v => `
-        <div class="bg-white p-2.5 rounded-xl border border-gray-100 flex justify-between items-center text-xs">
-          <div>
-            <strong class="text-gray-800 block">Venda #${v.id} - R$ ${parseFloat(v.total).toFixed(2)}</strong>
-            <span class="text-[10px] text-gray-400">${v.cliente_nome} (${v.forma_pagamento})</span>
-          </div>
-          <span class="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-lg">Concluída</span>
-        </div>
-      `).join('');
-    }
+      document.getElementById('form-os').reset();
+      mostrarToast('OS Cadastrada com Sucesso!');
+      mudarAba('agenda');
+    });
 
     verificarSessao();
   </script>
