@@ -86,8 +86,8 @@
           <button onclick="mudarAba('os')" class="bg-blue-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-blue-700">
             ➕ Nova OS
           </button>
-          <button onclick="mudarAba('produtos')" class="bg-purple-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-purple-700">
-            📦 Novo Produto
+          <button onclick="mudarAba('vendas')" class="bg-green-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-green-700">
+            🛒 Nova Venda
           </button>
         </div>
       </div>
@@ -175,9 +175,66 @@
 
     <!-- ABA 3: VENDAS (PDV) -->
     <div id="aba-vendas" class="aba-conteudo hidden space-y-4">
-      <h2 class="font-bold text-lg text-gray-800">Ponto de Venda (PDV)</h2>
-      <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
-        <p class="text-sm text-gray-500">Módulo de Vendas será o próximo passo!</p>
+      <h2 class="font-bold text-lg text-gray-800">Venda no Balcão (PDV)</h2>
+
+      <!-- Seleção de Produtos -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
+        <label class="block text-xs font-semibold text-gray-700">Adicionar Produto ao Carrinho</label>
+        <div class="flex space-x-2">
+          <select id="pdv-select-produto" class="flex-1 border rounded-lg p-2 text-xs bg-white focus:ring-2 focus:ring-green-500 outline-none">
+            <option value="">Carregando estoque...</option>
+          </select>
+          <button onclick="adicionarAoCarrinho()" class="bg-green-600 text-white font-bold text-xs px-4 py-2 rounded-lg hover:bg-green-700 transition">
+            + Add
+          </button>
+        </div>
+      </div>
+
+      <!-- Carrinho de Compras -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="font-bold text-sm text-gray-800 border-b pb-2 mb-3">Itens do Carrinho</h3>
+        
+        <div id="pdv-carrinho-itens" class="space-y-2 mb-4">
+          <p class="text-xs text-gray-400 text-center py-2">Carrinho vazio.</p>
+        </div>
+
+        <div class="border-t pt-3 space-y-3">
+          <div class="flex justify-between items-center text-lg font-bold text-gray-800">
+            <span>Total:</span>
+            <span id="pdv-total" class="text-green-600">R$ 0,00</span>
+          </div>
+
+          <!-- Dados do Cliente e Pagamento -->
+          <div class="space-y-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Nome do Cliente (Opcional)</label>
+              <input type="text" id="pdv-cliente-nome" placeholder="Cliente Balcão" class="w-full border rounded p-2 text-xs outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">WhatsApp / Telefone (para recibo)</label>
+              <input type="text" id="pdv-cliente-fone" placeholder="(84) 99999-9999" class="w-full border rounded p-2 text-xs outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Forma de Pagamento</label>
+              <select id="pdv-pagamento" class="w-full border rounded p-2 text-xs bg-white outline-none">
+                <option value="PIX">PIX</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+                <option value="Dinheiro">Dinheiro</option>
+              </select>
+            </div>
+          </div>
+
+          <button onclick="finalizarVenda()" id="btn-finalizar-venda" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow hover:bg-green-700 transition mt-2">
+            Finalizar Venda 💳
+          </button>
+        </div>
+      </div>
+
+      <!-- Histórico Recente de Vendas -->
+      <div>
+        <h3 class="font-bold text-sm text-gray-700 mb-2">Vendas Recentes</h3>
+        <div id="pdv-historico-vendas" class="space-y-2">Carregando...</div>
       </div>
     </div>
 
@@ -265,6 +322,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let produtosGlobal = [];
+    let carrinho = [];
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
@@ -295,6 +353,7 @@
 
       if (nomeAba === 'dashboard' || nomeAba === 'os') carregarOS();
       if (nomeAba === 'produtos') carregarProdutos();
+      if (nomeAba === 'vendas') inicializarPDV();
     }
 
     // AUTENTICAÇÃO
@@ -342,7 +401,7 @@
       verificarSessao();
     }
 
-    // CARREGAR OS DADOS
+    // CARREGAR DADOS DE OS
     async function carregarOS() {
       const containerTodas = document.getElementById('lista-todas-os');
       const containerDash = document.getElementById('dash-lista-os');
@@ -353,7 +412,7 @@
         .order('id', { ascending: false });
 
       if (error) {
-        if(containerTodas) containerTodas.innerHTML = `<p class="text-red-500 text-center">Erro: ${error.message}</p>`;
+        if(containerTodas) containerTodas.innerHTML = `<p class="text-red-500 text-center text-xs">Erro: ${error.message}</p>`;
         return;
       }
 
@@ -479,7 +538,7 @@
       }
     });
 
-    // --- MÓDULO DE PRODUTOS / ESTOQUE ---
+    // MÓDULO DE PRODUTOS / ESTOQUE
     async function carregarProdutos() {
       const container = document.getElementById('lista-produtos');
       const { data, error } = await _supabase
@@ -519,7 +578,6 @@
               </p>
             </div>
 
-            <!-- Ajuste Rápido de Estoque -->
             <div class="flex items-center space-x-2">
               <button onclick="alterarEstoque('${p.id}', -1)" class="bg-gray-100 text-gray-700 w-7 h-7 rounded-lg font-bold text-sm hover:bg-gray-200">-</button>
               <span class="text-xs font-bold px-1 ${estoqueBaixo ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : 'text-gray-800'}">${p.estoque}</span>
@@ -593,6 +651,181 @@
       } else {
         carregarProdutos();
       }
+    }
+
+    // --- MÓDULO DE VENDAS (PDV) ---
+    async function inicializarPDV() {
+      await carregarProdutos();
+      const select = document.getElementById('pdv-select-produto');
+
+      if (!produtosGlobal || produtosGlobal.length === 0) {
+        select.innerHTML = '<option value="">Nenhum produto em estoque</option>';
+      } else {
+        select.innerHTML = '<option value="">Selecione um produto...</option>' + 
+          produtosGlobal.map(p => `
+            <option value="${p.id}" ${p.estoque <= 0 ? 'disabled' : ''}>
+              ${p.nome} - R$ ${parseFloat(p.preco_venda).toFixed(2)} (Qtd: ${p.estoque})
+            </option>
+          `).join('');
+      }
+
+      carregarHistoricoVendas();
+    }
+
+    function adicionarAoCarrinho() {
+      const id = document.getElementById('pdv-select-produto').value;
+      if (!id) return alert('Selecione um produto!');
+
+      const prod = produtosGlobal.find(p => p.id === id);
+      if (!prod) return;
+
+      const itemExistente = carrinho.find(item => item.id === id);
+
+      if (itemExistente) {
+        if (itemExistente.quantidade >= prod.estoque) {
+          return alert('Quantidade limite do estoque atingida!');
+        }
+        itemExistente.quantidade += 1;
+      } else {
+        carrinho.push({
+          id: prod.id,
+          nome: prod.nome,
+          preco: parseFloat(prod.preco_venda),
+          quantidade: 1,
+          estoqueMax: prod.estoque
+        });
+      }
+
+      renderizarCarrinho();
+    }
+
+    function renderizarCarrinho() {
+      const container = document.getElementById('pdv-carrinho-itens');
+      const totalEl = document.getElementById('pdv-total');
+
+      if (carrinho.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">Carrinho vazio.</p>';
+        totalEl.innerText = 'R$ 0,00';
+        return;
+      }
+
+      let total = 0;
+      container.innerHTML = carrinho.map((item, index) => {
+        const subtotal = item.preco * item.quantidade;
+        total += subtotal;
+
+        return `
+          <div class="flex justify-between items-center text-xs bg-gray-50 p-2 rounded border border-gray-200">
+            <div>
+              <strong class="text-gray-800 block">${item.nome}</strong>
+              <span class="text-gray-500">R$ ${item.preco.toFixed(2)} x ${item.quantidade} = <strong class="text-green-600">R$ ${subtotal.toFixed(2)}</strong></span>
+            </div>
+            <button onclick="removerDoCarrinho(${index})" class="text-red-500 font-bold hover:text-red-700 px-2">✕</button>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.innerText = `R$ ${total.toFixed(2)}`;
+    }
+
+    function removerDoCarrinho(index) {
+      carrinho.splice(index, 1);
+      renderizarCarrinho();
+    }
+
+    async function finalizarVenda() {
+      if (carrinho.length === 0) return alert('O carrinho está vazio!');
+
+      const btn = document.getElementById('btn-finalizar-venda');
+      btn.disabled = true;
+      btn.innerText = 'Processando...';
+
+      try {
+        const total = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+        const clienteNome = document.getElementById('pdv-cliente-nome').value || 'Cliente Balcão';
+        const clienteFone = document.getElementById('pdv-cliente-fone').value;
+        const pagamento = document.getElementById('pdv-pagamento').value;
+
+        // 1. Criar registro de venda
+        const { data: venda, error: errVenda } = await _supabase
+          .from('vendas')
+          .insert([{ cliente_nome: clienteNome, cliente_telefone: clienteFone, total, forma_pagamento: pagamento }])
+          .select()
+          .single();
+
+        if (errVenda) throw errVenda;
+
+        // 2. Dar baixa no estoque e registrar os itens
+        for (const item of carrinho) {
+          await _supabase.from('venda_itens').insert([{
+            venda_id: venda.id,
+            produto_id: item.id,
+            produto_nome: item.nome,
+            quantidade: item.quantidade,
+            preco_unitario: item.preco
+          }]);
+
+          const prod = produtosGlobal.find(p => p.id === item.id);
+          if (prod) {
+            const novoEstoque = Math.max(0, prod.estoque - item.quantidade);
+            await _supabase.from('produtos').update({ estoque: novoEstoque }).eq('id', item.id);
+          }
+        }
+
+        alert('Venda finalizada com sucesso!');
+        
+        // WhatsApp Recibo
+        if (clienteFone) {
+          const foneLimpo = clienteFone.replace(/\D/g, '');
+          if (foneLimpo) {
+            const resumoItens = carrinho.map(i => `- ${i.quantidade}x ${i.nome} (R$ ${(i.preco * i.quantidade).toFixed(2)})`).join('\n');
+            const msg = encodeURIComponent(
+              `Olá, ${clienteNome}! Segue o comprovante da sua compra na Assistência Cell:\n\n` +
+              `${resumoItens}\n\n` +
+              `Total: R$ ${total.toFixed(2)}\n` +
+              `Pagamento: ${pagamento}\n\n` +
+              `Agradecemos a preferência!`
+            );
+            window.open(`https://wa.me/55${foneLimpo}?text=${msg}`, '_blank');
+          }
+        }
+
+        carrinho = [];
+        document.getElementById('pdv-cliente-nome').value = '';
+        document.getElementById('pdv-cliente-fone').value = '';
+        renderizarCarrinho();
+        inicializarPDV();
+
+      } catch (err) {
+        alert('Erro ao finalizar venda: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Finalizar Venda 💳';
+      }
+    }
+
+    async function carregarHistoricoVendas() {
+      const container = document.getElementById('pdv-historico-vendas');
+      const { data, error } = await _supabase
+        .from('vendas')
+        .select('*')
+        .order('id', { ascending: false })
+        .limit(5);
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">Nenhuma venda realizada recente.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(v => `
+        <div class="bg-white p-2.5 rounded-lg border border-gray-200 flex justify-between items-center text-xs">
+          <div>
+            <strong class="text-gray-800 block">Venda #${v.id} - R$ ${parseFloat(v.total).toFixed(2)}</strong>
+            <span class="text-[10px] text-gray-500">${v.cliente_nome} (${v.forma_pagamento})</span>
+          </div>
+          <span class="text-[10px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">Concluída</span>
+        </div>
+      `).join('');
     }
 
     verificarSessao();
