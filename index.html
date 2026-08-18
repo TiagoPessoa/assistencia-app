@@ -19,7 +19,7 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-900 pb-20">
 
-  <!-- TELA DE LOGIN (Se não estiver autenticado) -->
+  <!-- TELA DE LOGIN -->
   <div id="secao-login" class="hidden max-w-md w-full mx-auto p-6 mt-12">
     <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 text-center">
       <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
@@ -86,8 +86,8 @@
           <button onclick="mudarAba('os')" class="bg-blue-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-blue-700">
             ➕ Nova OS
           </button>
-          <button onclick="alert('Em breve: PDV de Vendas!')" class="bg-green-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-green-700">
-            🛒 Nova Venda
+          <button onclick="mudarAba('produtos')" class="bg-purple-600 text-white p-3 rounded-lg font-semibold text-xs text-center shadow hover:bg-purple-700">
+            📦 Novo Produto
           </button>
         </div>
       </div>
@@ -177,16 +177,62 @@
     <div id="aba-vendas" class="aba-conteudo hidden space-y-4">
       <h2 class="font-bold text-lg text-gray-800">Ponto de Venda (PDV)</h2>
       <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
-        <p class="text-sm text-gray-500">Módulo de Vendas de produtos e acessórios será ativado a seguir.</p>
+        <p class="text-sm text-gray-500">Módulo de Vendas será o próximo passo!</p>
       </div>
     </div>
 
     <!-- ABA 4: ESTOQUE / PRODUTOS -->
     <div id="aba-produtos" class="aba-conteudo hidden space-y-4">
-      <h2 class="font-bold text-lg text-gray-800">Gestão de Estoque</h2>
-      <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
-        <p class="text-sm text-gray-500">Módulo de Cadastro de Produtos e Peças será ativado a seguir.</p>
+      <!-- Form Cadastrar Produto -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <h2 class="font-bold text-lg text-gray-800 mb-3">Novo Produto / Peça</h2>
+        
+        <form id="form-produto" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Nome do Item *</label>
+            <input type="text" id="prod_nome" required placeholder="Ex: Película 3D iPhone 11 / Tela A32" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-purple-500 outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Categoria</label>
+              <select id="prod_categoria" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                <option value="Acessório">Acessório</option>
+                <option value="Peça">Peça de Reposição</option>
+                <option value="Carregador/Cabo">Carregador / Cabo</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Estoque Inicial *</label>
+              <input type="number" id="prod_estoque" required min="0" value="5" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-purple-500 outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Preço de Custo (R$)</label>
+              <input type="number" step="0.01" id="prod_custo" placeholder="0.00" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-purple-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Preço de Venda (R$) *</label>
+              <input type="number" step="0.01" id="prod_venda" required placeholder="0.00" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-purple-500 outline-none">
+            </div>
+          </div>
+
+          <button type="submit" id="btn-salvar-prod" class="w-full bg-purple-600 text-white font-bold py-2.5 rounded-lg shadow hover:bg-purple-700 transition mt-2">
+            Cadastrar no Estoque
+          </button>
+        </form>
       </div>
+
+      <!-- Lista de Estoque -->
+      <div class="flex justify-between items-center">
+        <h2 class="font-bold text-base text-gray-800">Itens em Estoque</h2>
+        <input type="text" id="busca-produto" oninput="filtrarProdutos()" placeholder="🔍 Buscar produto..." class="border rounded-lg px-2.5 py-1 text-xs w-36 outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <div id="lista-produtos" class="space-y-2">Carregando...</div>
     </div>
 
   </div>
@@ -218,6 +264,8 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxcXB2ZnZ5c2lyaHJuZGlxbW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwMDYxNTgsImV4cCI6MjEwMjU4MjE1OH0.sPXwwR2xreRDpDjZISUNLC1HbECZXRqWWIoheXOD2Z4';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let produtosGlobal = [];
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
     }
@@ -245,9 +293,8 @@
         btnAtivo.classList.add('text-blue-600');
       }
 
-      if (nomeAba === 'dashboard' || nomeAba === 'os') {
-        carregarOS();
-      }
+      if (nomeAba === 'dashboard' || nomeAba === 'os') carregarOS();
+      if (nomeAba === 'produtos') carregarProdutos();
     }
 
     // AUTENTICAÇÃO
@@ -295,7 +342,7 @@
       verificarSessao();
     }
 
-    // CARREGAR DADOS DE OS E DASHBOARD
+    // CARREGAR OS DADOS
     async function carregarOS() {
       const containerTodas = document.getElementById('lista-todas-os');
       const containerDash = document.getElementById('dash-lista-os');
@@ -310,7 +357,6 @@
         return;
       }
 
-      // Atualizar contadores do Dashboard
       const abertas = data.filter(os => os.status !== 'Entregue / Finalizado').length;
       const finalizadas = data.filter(os => os.status === 'Entregue / Finalizado').length;
       
@@ -432,6 +478,122 @@
         btn.innerText = 'Salvar Ordem de Serviço';
       }
     });
+
+    // --- MÓDULO DE PRODUTOS / ESTOQUE ---
+    async function carregarProdutos() {
+      const container = document.getElementById('lista-produtos');
+      const { data, error } = await _supabase
+        .from('produtos')
+        .select('*')
+        .order('nome', { ascending: true });
+
+      if (error) {
+        container.innerHTML = `<p class="text-red-500 text-center text-xs">Erro: ${error.message}</p>`;
+        return;
+      }
+
+      produtosGlobal = data || [];
+      renderizarProdutos(produtosGlobal);
+    }
+
+    function renderizarProdutos(lista) {
+      const container = document.getElementById('lista-produtos');
+      
+      if (!lista || lista.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center text-xs py-4">Nenhum produto cadastrado no estoque.</p>';
+        return;
+      }
+
+      container.innerHTML = lista.map(p => {
+        const estoqueBaixo = p.estoque <= (p.estoque_minimo || 2);
+        return `
+          <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center">
+            <div>
+              <div class="flex items-center space-x-2">
+                <strong class="text-sm text-gray-800">${p.nome}</strong>
+                <span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${p.categoria}</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">
+                Venda: <strong class="text-green-600">R$ ${parseFloat(p.preco_venda).toFixed(2)}</strong> 
+                ${p.preco_custo ? `<span class="text-[10px] text-gray-400">(Custo: R$ ${parseFloat(p.preco_custo).toFixed(2)})</span>` : ''}
+              </p>
+            </div>
+
+            <!-- Ajuste Rápido de Estoque -->
+            <div class="flex items-center space-x-2">
+              <button onclick="alterarEstoque('${p.id}', -1)" class="bg-gray-100 text-gray-700 w-7 h-7 rounded-lg font-bold text-sm hover:bg-gray-200">-</button>
+              <span class="text-xs font-bold px-1 ${estoqueBaixo ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : 'text-gray-800'}">${p.estoque}</span>
+              <button onclick="alterarEstoque('${p.id}', 1)" class="bg-gray-100 text-gray-700 w-7 h-7 rounded-lg font-bold text-sm hover:bg-gray-200">+</button>
+              <button onclick="deletarProduto('${p.id}')" class="text-red-400 hover:text-red-600 text-xs ml-1">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filtrarProdutos() {
+      const termo = document.getElementById('busca-produto').value.toLowerCase();
+      const filtrados = produtosGlobal.filter(p => p.nome.toLowerCase().includes(termo) || p.categoria.toLowerCase().includes(termo));
+      renderizarProdutos(filtrados);
+    }
+
+    document.getElementById('form-produto').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-salvar-prod');
+      btn.disabled = true;
+      btn.innerText = 'Salvando...';
+
+      try {
+        const novoProd = {
+          nome: document.getElementById('prod_nome').value,
+          categoria: document.getElementById('prod_categoria').value,
+          estoque: parseInt(document.getElementById('prod_estoque').value),
+          preco_custo: parseFloat(document.getElementById('prod_custo').value || 0),
+          preco_venda: parseFloat(document.getElementById('prod_venda').value)
+        };
+
+        const { error } = await _supabase.from('produtos').insert([novoProd]);
+        if (error) throw error;
+
+        document.getElementById('form-produto').reset();
+        alert('Produto cadastrado com sucesso!');
+        carregarProdutos();
+      } catch (err) {
+        alert('Erro ao salvar produto: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Cadastrar no Estoque';
+      }
+    });
+
+    async function alterarEstoque(id, delta) {
+      const prod = produtosGlobal.find(p => p.id === id);
+      if (!prod) return;
+
+      const novoEstoque = Math.max(0, prod.estoque + delta);
+
+      const { error } = await _supabase
+        .from('produtos')
+        .update({ estoque: novoEstoque })
+        .eq('id', id);
+
+      if (error) {
+        alert('Erro ao atualizar estoque: ' + error.message);
+      } else {
+        carregarProdutos();
+      }
+    }
+
+    async function deletarProduto(id) {
+      if (!confirm('Deseja realmente excluir este produto?')) return;
+
+      const { error } = await _supabase.from('produtos').delete().eq('id', id);
+      if (error) {
+        alert('Erro ao excluir: ' + error.message);
+      } else {
+        carregarProdutos();
+      }
+    }
 
     verificarSessao();
   </script>
