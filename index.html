@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistência Técnica</title>
+
+  <!-- Configurações PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SDK Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-900 pb-10">
+
+  <div class="max-w-md mx-auto p-4">
+    <h1 class="text-2xl font-bold text-blue-600 mb-4 text-center">Assistência Técnica</h1>
+
+    <!-- Formulário de Nova OS -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
+      <h2 class="font-bold text-lg text-gray-800 mb-3">Nova Ordem de Serviço</h2>
+      
+      <form id="form-os" class="space-y-3">
+        <!-- Dados do Cliente -->
+        <h3 class="text-sm font-semibold text-blue-600 border-b pb-1">Cliente</h3>
+        <div>
+          <label class="block text-xs font-medium text-gray-600">Nome do Cliente *</label>
+          <input type="text" id="cliente_nome" required class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600">WhatsApp / Telefone *</label>
+          <input type="text" id="cliente_telefone" required placeholder="(84) 99999-9999" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <!-- Dados do Aparelho -->
+        <h3 class="text-sm font-semibold text-blue-600 border-b pb-1 pt-2">Aparelho</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Marca *</label>
+            <input type="text" id="aparelho_marca" required placeholder="Ex: Samsung" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Modelo *</label>
+            <input type="text" id="aparelho_modelo" required placeholder="Ex: Galaxy A32" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-600">Senha / Padrão</label>
+            <input type="text" id="senha_aparelho" placeholder="1234 / Desenho" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600">IMEI / Nº Série</label>
+            <input type="text" id="imei_serie" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600">Defeito Relatado *</label>
+          <textarea id="defeito_relatado" required rows="2" class="w-full border rounded p-2 text-sm mt-1 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+        </div>
+
+        <!-- Checklist de Entrada -->
+        <h3 class="text-sm font-semibold text-blue-600 border-b pb-1 pt-2">Checklist de Entrada</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="chk_liga" checked class="rounded text-blue-600">
+            <span>Aparelho Liga</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="chk_tela" class="rounded text-blue-600">
+            <span>Tela Trincada</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="chk_touch" checked class="rounded text-blue-600">
+            <span>Touch Ok</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="chk_camera" checked class="rounded text-blue-600">
+            <span>Câmeras Ok</span>
+          </label>
+        </div>
+
+        <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-bold py-2 rounded shadow hover:bg-blue-700 transition mt-4">
+          Cadastrar Ordem de Serviço
+        </button>
+      </form>
+    </div>
+
+    <!-- Lista de OS -->
+    <h2 class="font-bold text-lg text-gray-800 mb-3">Ordens de Serviço Recentes</h2>
+    <div id="conteudo" class="space-y-3">Carregando...</div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://sqqpvfvysirhrndiqmnb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxcXB2ZnZ5c2lyaHJuZGlxbW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwMDYxNTgsImV4cCI6MjEwMjU4MjE1OH0.sPXwwR2xreRDpDjZISUNLC1HbECZXRqWWIoheXOD2Z4';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
+    }
+
+    const STATUS_OPCOES = [
+      'Aguardando Avaliação',
+      'Em Manutenção',
+      'Aguardando Peça',
+      'Pronto para Retirada',
+      'Entregue / Finalizado'
+    ];
+
+    async function carregarOS() {
+      const container = document.getElementById('conteudo');
+      const { data, error } = await _supabase
+        .from('ordens_servico')
+        .select('*, clientes(nome, telefone)')
+        .order('id', { ascending: false });
+
+      if (error) {
+        container.innerHTML = `<p class="text-red-500 text-center">Erro: ${error.message}</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center">Nenhuma OS cadastrada.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(os => {
+        const fone = os.clientes?.telefone ? os.clientes.telefone.replace(/\D/g, '') : '';
+        const msgWhats = encodeURIComponent(
+          `Olá, ${os.clientes?.nome || 'cliente'}! Segue o status da sua OS #${os.id}:\n\n` +
+          `Aparelho: ${os.aparelho_marca} ${os.aparelho_modelo}\n` +
+          `Status Atual: ${os.status}\n` +
+          `Defeito Relatado: ${os.defeito_relatado}`
+        );
+
+        return `
+          <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-bold text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">OS #${os.id}</span>
+              
+              <!-- Seletor de Status -->
+              <select onchange="atualizarStatus(${os.id}, this.value)" class="text-xs bg-blue-50 border border-blue-200 text-blue-800 font-semibold rounded p-1 outline-none">
+                ${STATUS_OPCOES.map(st => `
+                  <option value="${st}" ${os.status === st ? 'selected' : ''}>${st}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <h3 class="font-bold text-base text-gray-800">${os.aparelho_marca} ${os.aparelho_modelo}</h3>
+            <p class="text-xs text-gray-600">Cliente: <strong>${os.clientes?.nome || 'N/A'}</strong> (${os.clientes?.telefone || ''})</p>
+            <p class="text-xs text-gray-500 mt-1"><strong>Defeito:</strong> ${os.defeito_relatado}</p>
+
+            ${fone ? `
+              <a href="https://wa.me/55${fone}?text=${msgWhats}" target="_blank" class="inline-block mt-3 text-xs bg-green-600 text-white font-bold py-1 px-3 rounded hover:bg-green-700 transition">
+                📱 Enviar no WhatsApp
+              </a>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function atualizarStatus(osId, novoStatus) {
+      const { error } = await _supabase
+        .from('ordens_servico')
+        .update({ status: novoStatus })
+        .eq('id', osId);
+
+      if (error) {
+        alert('Erro ao atualizar status: ' + error.message);
+      } else {
+        carregarOS();
+      }
+    }
+
+    document.getElementById('form-os').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-salvar');
+      btn.disabled = true;
+      btn.innerText = 'Salvando...';
+
+      try {
+        const nome = document.getElementById('cliente_nome').value;
+        const telefone = document.getElementById('cliente_telefone').value;
+
+        const { data: cliente, error: errCliente } = await _supabase
+          .from('clientes')
+          .insert([{ nome, telefone }])
+          .select()
+          .single();
+
+        if (errCliente) throw errCliente;
+
+        const checklist = {
+          liga: document.getElementById('chk_liga').checked,
+          tela_trincada: document.getElementById('chk_tela').checked,
+          touch_ok: document.getElementById('chk_touch').checked,
+          camera_ok: document.getElementById('chk_camera').checked
+        };
+
+        const novaOS = {
+          cliente_id: cliente.id,
+          aparelho_marca: document.getElementById('aparelho_marca').value,
+          aparelho_modelo: document.getElementById('aparelho_modelo').value,
+          senha_aparelho: document.getElementById('senha_aparelho').value,
+          imei_serie: document.getElementById('imei_serie').value,
+          defeito_relatado: document.getElementById('defeito_relatado').value,
+          checklist_entrada: checklist
+        };
+
+        const { error: errOS } = await _supabase.from('ordens_servico').insert([novaOS]);
+        if (errOS) throw errOS;
+
+        document.getElementById('form-os').reset();
+        alert('Ordem de Serviço criada com sucesso!');
+        carregarOS();
+      } catch (err) {
+        alert('Erro ao salvar: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Cadastrar Ordem de Serviço';
+      }
+    });
+
+    carregarOS();
+  </script>
+</body>
+</html>
